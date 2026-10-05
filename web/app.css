@@ -1,7 +1,9 @@
 /* Notes on the kit (kit/ui.css): the Librarian · the page · the vault. The page keeps Olivetti's look: a big inline
    title, a calm column of text, a one-line slash menu, the conflict banner. */
-.shell { --side-w: 290px; }
-.page-pane { display: grid; grid-template-rows: auto auto minmax(0, 1fr); background: var(--surface); }
+.shell { --side-w: 290px; grid-template-columns: minmax(0, 1fr) var(--side-w); }
+/* the Librarian floats in the page's top corner (kit/persona-float.js); the bar leaves it room */
+.page-pane { position: relative; display: grid; grid-template-rows: auto auto minmax(0, 1fr); background: var(--surface); }
+.page-bar { padding-right: 56px !important; }
 
 /* the bar over the page */
 .page-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; min-height: 46px; }
@@ -151,4 +153,4 @@
 #toast div { background: var(--label); color: var(--window); padding: 8px 14px; border-radius: 10px; font-size: 12.5px; box-shadow: var(--shadow-lg); }
 
 @media (max-width: 1100px) { .page { padding: 20px 32px 30vh; } .title { font-size: 2rem; padding-top: 2rem; } }
-@media (max-width: 900px) { .page { padding: 12px 18px 30vh; } }
+@media (max-width: 900px) { .page { padding: 12px 18px 30vh; } .shell > .pane-main { order: 1; } }

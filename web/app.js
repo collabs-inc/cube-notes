@@ -1,6 +1,7 @@
 // Notes' page: the Librarian (kit/persona.js), the page (editor.bundle.js), the vault. Files on disk are the truth:
 // the page saves what you type, and takes what anyone else writes (an agent, Obsidian, git) as it lands.
-import { mountPersona, applyTheme } from '/kit/persona.js';
+import { applyTheme } from '/kit/persona.js';
+import { mountFloatingPersona } from '/kit/persona-float.js';
 import { createEditor } from '/web/editor.bundle.js';
 applyTheme();
 
@@ -53,7 +54,7 @@ const editor = createEditor($('editor'), {
     return (await r.json()).name;
   },
   onChange: () => { if (applying) return; S.dirty = true; saveState(); scheduleSave(); },
-  onSelection: () => { persona.refreshContext(); },
+  onSelection: () => { persona?.refreshContext(); },
   onSave: () => save(),
 });
 let applying = false;            // true while the page writes into the editor itself (loading, taking disk changes)
@@ -119,7 +120,7 @@ async function openNote(path, { push = true, line } = {}) {
   showPage(true);
   renderHeader(); renderSide(); loadLinked(); saveState();
   if (line) editor.scrollToLine(line); else $('scroll').scrollTop = 0;
-  persona.refreshContext();
+  persona?.refreshContext();
 }
 async function openLink(target) {
   const t = String(target).split('#')[0].split('|')[0].trim();
@@ -310,8 +311,11 @@ addEventListener('keydown', e => {
 addEventListener('beforeunload', e => { if (S.dirty) { save(); e.preventDefault(); } });
 
 // ---- the Librarian ----
-const persona = mountPersona($('persona'), {
+// the Librarian floats in the page's top corner: ⌘J or its avatar to talk, bubbles that fade over the page
+const persona = mountFloatingPersona($('pagePane'), {
   base: '/api/librarian', name: 'Librarian', role: 'Your notes',
+  placeholder: c => c?.label ? `Ask the Librarian about “${c.label.split(' · ')[0]}”…` : 'Ask the Librarian…',
+  onClose: () => editor.focus(),
   avatar: { color: 'linear-gradient(160deg, #ffb340, #ff9500 55%, #d26a00)', svg: ICON.book.replace('stroke-width="2"', 'stroke-width="2.1"') },
   placeholder: 'Ask the Librarian…',
   hello: {
