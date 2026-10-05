@@ -292,7 +292,7 @@ input[type=range] { accent-color: var(--accent); }
 .pf-avatar svg { width: 15px; height: 15px; }
 .pf-ring { position: absolute; inset: -4px; border-radius: 50%; border: 2px solid transparent; }
 .pf.busy .pf-ring { border-top-color: var(--orange); border-right-color: color-mix(in srgb, var(--orange) 40%, transparent); animation: kit-spin .9s linear infinite; }
-.pf-compose { display: flex; align-items: flex-end; gap: 4px; width: min(340px, 60vw); background: var(--raised); border-radius: 17px 4px 17px 17px; padding: 4px 4px 4px 6px; box-shadow: var(--shadow-lg); animation: pf-pop .16s ease-out; }
+.pf-compose { display: flex; align-items: flex-end; gap: 4px; width: 100%; background: var(--raised); border-radius: 17px; padding: 4px 4px 4px 6px; box-shadow: var(--shadow-lg); animation: pf-pop .16s ease-out; }
 .pf-compose[hidden] { display: none; }
 .pf-compose textarea { flex: 1; min-width: 0; resize: none; border: 0; outline: none; background: none; font: 13.5px/1.45 var(--font); padding: 4px 2px; max-height: 140px; color: var(--label); }
 .pf-compose textarea::placeholder { color: var(--label-3); }
@@ -325,5 +325,5 @@ input[type=range] { accent-color: var(--accent); }
 .pf-drawer-head b { font: 600 13px var(--font); color: var(--label-3); }
 .pf-drawer-body { flex: 1; min-height: 0; }
 .pf-drawer-body .persona-grip { display: none; }
-@keyframes pf-pop { from { opacity: 0; transform: translateX(6px) scale(.97); } }
+@keyframes pf-pop { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
 @keyframes pf-slide { from { transform: translateX(20px); opacity: 0; } }

@@ -1,5 +1,5 @@
-// A persona that floats instead of taking a column: an avatar in a corner of the page, a small input that opens
-// beside it, and bubbles over the page that fade, like a cursor chat. The whole conversation stays a click away in
+// A persona that floats instead of taking a column: an avatar in a corner of the page, the conversation under it as
+// bubbles over the page that fade, like a cursor chat, and the input below the bubbles, where the next line goes. The whole conversation stays a click away in
 // a drawer (the column from persona.js, mounted on demand). Same server half (kit/persona.mjs), same routes.
 //
 //   import { mountFloatingPersona } from '/kit/persona-float.js';
@@ -25,15 +25,15 @@ export function mountFloatingPersona(host, opts) {
   root.className = 'pf';
   root.innerHTML = `
     <div class="pf-corner">
-      <div class="pf-compose" hidden>
-        <button class="pf-icon pf-history" title="The whole conversation">${ICON_LIST}</button>
-        <textarea rows="1" spellcheck="true"></textarea>
-        <button class="pf-send" title="Send">${ICON_SEND}</button>
-      </div>
       <button class="pf-avatar" title="${esc(name)} (⌘J)" style="background:${avatar.color}">${avatar.svg}<span class="pf-ring"></span></button>
     </div>
-    <div class="pf-status" hidden></div>
     <div class="pf-stack"></div>
+    <div class="pf-status" hidden></div>
+    <div class="pf-compose" hidden>
+      <button class="pf-icon pf-history" title="The whole conversation">${ICON_LIST}</button>
+      <textarea rows="1" spellcheck="true"></textarea>
+      <button class="pf-send" title="Send">${ICON_SEND}</button>
+    </div>
     <aside class="pf-drawer" hidden><div class="pf-drawer-head"><b>${esc(name)}</b><button class="pf-icon pf-close" title="Close">${ICON_X}</button></div><div class="pf-drawer-body"></div></aside>`;
   host.appendChild(root);
   const $ = s => root.querySelector(s);
@@ -135,6 +135,11 @@ export function mountFloatingPersona(host, opts) {
   });
   sendBtn.onclick = () => (sendBtn.classList.contains('stop') ? post('/stop') : say(text.value));
   $('.pf-avatar').onclick = () => (compose.hidden ? openCompose() : (closeCompose(), opts.onClose?.()));
+  // a click anywhere else closes it; what you had typed stays for next time
+  document.addEventListener('mousedown', e => {
+    if (compose.hidden || root.contains(e.target)) return;
+    closeCompose(); opts.onClose?.({ byClick: true });
+  });
   addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') { e.preventDefault(); compose.hidden ? openCompose() : (closeCompose(), opts.onClose?.()); } });
 
   // ---- the whole conversation, in a drawer ----

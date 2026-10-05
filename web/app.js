@@ -315,7 +315,7 @@ addEventListener('beforeunload', e => { if (S.dirty) { save(); e.preventDefault(
 const persona = mountFloatingPersona($('pagePane'), {
   base: '/api/librarian', name: 'Librarian', role: 'Your notes',
   placeholder: c => c?.label ? `Ask the Librarian about “${c.label.split(' · ')[0]}”…` : 'Ask the Librarian…',
-  onClose: () => editor.focus(),
+  onClose: how => { if (!how?.byClick) editor.focus(); },   // a click elsewhere puts focus where you clicked
   avatar: { color: 'linear-gradient(160deg, #ffb340, #ff9500 55%, #d26a00)', svg: ICON.book.replace('stroke-width="2"', 'stroke-width="2.1"') },
   placeholder: 'Ask the Librarian…',
   hello: {
