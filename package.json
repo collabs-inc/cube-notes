@@ -1,0 +1,24 @@
+{
+  "name": "cube-notes",
+  "private": true,
+  "type": "module",
+  "description": "Notes: an Obsidian-compatible vault for people and agents, with a Librarian in the left column. A Cube app.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server/server.mjs",
+    "setup": "node server/setup-home.mjs",
+    "build": "esbuild web/editor.js --bundle --format=esm --minify --target=es2020 --outfile=web/editor.bundle.js",
+    "test": "node --test server/*.test.mjs"
+  },
+  "devDependencies": {
+    "@codemirror/autocomplete": "^6.18.0",
+    "@codemirror/commands": "^6.7.0",
+    "@codemirror/lang-markdown": "^6.3.0",
+    "@codemirror/language": "^6.10.0",
+    "@codemirror/search": "^6.5.0",
+    "@codemirror/state": "^6.4.0",
+    "@codemirror/view": "^6.34.0",
+    "@lezer/markdown": "^1.3.0",
+    "esbuild": "^0.24.0"
+  }
+}

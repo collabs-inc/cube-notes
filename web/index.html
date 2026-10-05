@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notes</title>
+<link rel="icon" href="/web/icon.svg">
+<link rel="stylesheet" href="/kit/ui.css">
+<link rel="stylesheet" href="/web/app.css">
+</head>
+<body>
+<div class="shell">
+  <section class="pane-side pane-left" id="persona"></section>
+
+  <main class="pane-main page-pane">
+    <header class="page-bar">
+      <div class="nav">
+        <button class="icon-btn" id="back" title="Back (⌘[)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+        <button class="icon-btn" id="fwd" title="Forward (⌘])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+      </div>
+      <div class="crumbs" id="crumbs"></div>
+      <span class="save" id="saveState"></span>
+      <button class="icon-btn" id="more" title="More"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+    </header>
+    <div class="banner" id="banner" hidden></div>
+    <div class="page-scroll" id="scroll">
+      <article class="page" id="page">
+        <textarea class="title" id="title" rows="1" placeholder="Untitled" spellcheck="false"></textarea>
+        <div class="editor" id="editor"></div>
+        <section class="linked" id="linked"></section>
+      </article>
+      <div class="blank-page" id="blank" hidden></div>
+    </div>
+  </main>
+
+  <aside class="pane-side pane-right side">
+    <div class="side-top">
+      <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search notes" autocomplete="off"></label>
+      <div class="side-actions">
+        <button class="btn" id="newNote" title="New note (⌘N)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.4 3.6a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>New note</button>
+        <button class="btn" id="today" title="Today’s note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Today</button>
+      </div>
+    </div>
+    <div class="side-scroll" id="side"></div>
+  </aside>
+</div>
+<div id="menu"></div>
+<div id="toast"></div>
+<script type="module" src="/web/app.js"></script>
+</body>
+</html>
