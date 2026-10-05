@@ -1,7 +1,7 @@
-/* Notes on the kit (kit/ui.css): the Librarian · the page · the vault. The page keeps Olivetti's look: a big inline
+/* Cube Write on the kit (kit/ui.css): the page · the vault, and the Editor floating in the corner. The page keeps Olivetti's look: a big inline
    title, a calm column of text, a one-line slash menu, the conflict banner. */
 .shell { --side-w: 290px; grid-template-columns: minmax(0, 1fr) var(--side-w); }
-/* the Librarian floats in the page's top corner (kit/persona-float.js); the bar leaves it room */
+/* the Editor floats in the page's top corner (kit/persona-float.js); the bar leaves it room */
 .page-pane { position: relative; display: grid; grid-template-rows: auto auto minmax(0, 1fr); background: var(--surface); }
 .page-bar { padding-right: 56px !important; }
 

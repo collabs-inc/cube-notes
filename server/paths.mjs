@@ -1,17 +1,17 @@
-// Where things live. Notes is an app: its own folder (APP) is replaced by every update, so nothing the user writes
+// Where things live. Cube Write is an app: its own folder (APP) is replaced by every update, so nothing the user writes
 // is kept there.
 //
-//   APP      this repository: server/, web/, kit/, librarian/, starter/
+//   APP      this repository: server/, web/, kit/, editor/, starter/
 //   HOME     the vault: ~/Notes by default (NOTES_HOME, or "home" in STATE/settings.json), a folder of Markdown
 //            that Obsidian opens as it is, and a git repository
-//   STATE    the app's bookkeeping (the Librarian's conversation, recent notes): ~/.local/state/cube-notes
+//   STATE    the app's bookkeeping (the Editor's conversation): ~/.local/state/cube-write
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 export const APP = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 export const STATE = path.resolve(process.env.NOTES_STATE
-  || path.join(process.env.XDG_STATE_HOME || path.join(os.homedir(), '.local', 'state'), 'cube-notes'));
+  || path.join(process.env.XDG_STATE_HOME || path.join(os.homedir(), '.local', 'state'), 'cube-write'));
 const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return d; } };
 export const settings = () => readJson(path.join(STATE, 'settings.json'), {});
 export function saveSettings(patch) {

@@ -1,6 +1,6 @@
 {
-  "name": "Notes",
-  "description": "An Obsidian-compatible vault for you and your agents, with a Librarian that summarizes, links and files.",
+  "name": "Cube Write",
+  "description": "An Obsidian-compatible vault for you and your agents, with an Editor that summarizes, links and files.",
   "icon": "web/icon.svg",
   "install": "node server/setup-home.mjs",
   "start": "node server/server.mjs"

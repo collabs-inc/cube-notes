@@ -1,8 +1,8 @@
 {
-  "name": "cube-notes",
+  "name": "cube-write",
   "private": true,
   "type": "module",
-  "description": "Notes: an Obsidian-compatible vault for people and agents, with a Librarian in the left column. A Cube app.",
+  "description": "Cube Write: an Obsidian-compatible vault for people and agents, with an Editor in the left column. A Cube app.",
   "engines": { "node": ">=20" },
   "scripts": {
     "start": "node server/server.mjs",

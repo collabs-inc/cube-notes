@@ -7,13 +7,13 @@ import { execFileSync } from 'node:child_process';
 import { APP, STATE, home } from './paths.mjs';
 
 const HOME = home();
-const BEGIN = '<!-- cube-notes:begin -->', END = '<!-- cube-notes:end -->';
+const BEGIN = '<!-- cube-write:begin -->', END = '<!-- cube-write:end -->';
 const block = `${BEGIN}
-## Notes (the Cube app)
+## Cube Write (the Cube app)
 
 This folder is an Obsidian-compatible vault. Agents read and write the Markdown files directly. Keep to Obsidian's
 syntax: YAML front matter, \`[[wiki links]]\`, \`![[embeds]]\`, \`#tags\`, \`- [ ]\` tasks, daily notes named YYYY-MM-DD. Never
-touch .obsidian/. The app's brief for agents is \`${APP}/librarian/LIBRARIAN.md\`.
+touch .obsidian/. The app's brief for agents is \`${APP}/editor/EDITOR.md\`.
 ${END}`;
 const git = (...a) => execFileSync('git', ['-C', HOME, ...a], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });
 fs.mkdirSync(STATE, { recursive: true });
@@ -28,7 +28,7 @@ if (created) {
   git('init', '-q', '-b', 'main');
   git('add', '-A');
   let who = [];
-  try { git('config', 'user.email'); } catch { who = ['-c', 'user.name=Notes', '-c', 'user.email=notes@cube.invalid']; }
+  try { git('config', 'user.email'); } catch { who = ['-c', 'user.name=Cube Write', '-c', 'user.email=notes@cube.invalid']; }
   execFileSync('git', ['-C', HOME, ...who, 'commit', '-q', '-m', 'Start the vault'], { stdio: 'ignore' });
   console.log(`notes: created ${HOME}`);
 } else console.log(`notes: ${HOME} already exists; left as it is`);

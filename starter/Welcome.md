@@ -11,8 +11,8 @@ This folder is your vault: plain Markdown files that you, your agents and [Obsid
 - Type `[[` to link another note, like [[Ideas]]. A link to a note that doesn't exist yet creates it when you click it.
 - Tag anything with #tags, and check things off:
 - [ ] Write your first note
-- [ ] Ask the Librarian to summarize it
+- [ ] Ask the Editor to summarize it
 
-## Working with the Librarian
+## Working with the Editor
 
-The Librarian, on the left, reads and writes these same files. Ask it to summarize a note, find what you wrote about something, link related notes, or turn a messy meeting dump into clean sections. What it changes shows up here as it happens.
+The Editor, in the top corner (⌘J), reads and writes these same files. Ask it to summarize a note, find what you wrote about something, link related notes, or turn a messy meeting dump into clean sections. What it changes shows up here as it happens.

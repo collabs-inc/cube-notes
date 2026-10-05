@@ -1,4 +1,4 @@
-// Notes' page: the Librarian (kit/persona.js), the page (editor.bundle.js), the vault. Files on disk are the truth:
+// Cube Write's page: the Editor (kit/persona-float.js), the page (editor.bundle.js), the vault. Files on disk are the truth:
 // the page saves what you type, and takes what anyone else writes (an agent, Obsidian, git) as it lands.
 import { applyTheme } from '/kit/persona.js';
 import { mountFloatingPersona } from '/kit/persona-float.js';
@@ -263,7 +263,7 @@ $('more').onclick = e => {
   if (!S.path) return;
   const r = e.currentTarget.getBoundingClientRect();
   $('menu').innerHTML = `<div class="menu" style="top:${r.bottom + 6}px;right:${innerWidth - r.right}px">
-    <button data-m="rename">Rename</button><button data-m="move">Move to folder…</button><button data-m="copy">Copy link</button><button data-m="librarian">Ask the Librarian about this note</button>
+    <button data-m="rename">Rename</button><button data-m="move">Move to folder…</button><button data-m="copy">Copy link</button><button data-m="editor">Ask the Editor about this note</button>
     <hr><button class="danger" data-m="delete">Move to trash</button></div>`;
 };
 addEventListener('mousedown', e => { if ($('menu').innerHTML && !e.target.closest('.menu, #more')) $('menu').innerHTML = ''; });
@@ -273,7 +273,7 @@ $('menu').onclick = async e => {
   const name = S.path.split('/').pop().replace(/\.md$/, '');
   if (b.dataset.m === 'rename') { $('title').focus(); $('title').select(); }
   if (b.dataset.m === 'copy') { await navigator.clipboard.writeText(`[[${name}]]`).catch(() => {}); toast(`Copied [[${name}]]`); }
-  if (b.dataset.m === 'librarian') persona.prefill('About this note: ');
+  if (b.dataset.m === 'editor') persona.prefill('About this note: ');
   if (b.dataset.m === 'move') {
     const dir = prompt('Move to which folder? (empty for the top of the vault)', S.path.includes('/') ? S.path.slice(0, S.path.lastIndexOf('/')) : '');
     if (dir === null) return;
@@ -310,14 +310,14 @@ addEventListener('keydown', e => {
 });
 addEventListener('beforeunload', e => { if (S.dirty) { save(); e.preventDefault(); } });
 
-// ---- the Librarian ----
-// the Librarian floats in the page's top corner: ⌘J or its avatar to talk, bubbles that fade over the page
+// ---- the Editor ----
+// the Editor floats in the page's top corner: ⌘J or its avatar to talk, bubbles that fade over the page
 const persona = mountFloatingPersona($('pagePane'), {
-  base: '/api/librarian', name: 'Librarian', role: 'Your notes',
-  placeholder: c => c?.label ? `Ask the Librarian about “${c.label.split(' · ')[0]}”…` : 'Ask the Librarian…',
+  base: '/api/editor', name: 'Editor', role: 'Your notes',
+  placeholder: c => c?.label ? `Ask the Editor about “${c.label.split(' · ')[0]}”…` : 'Ask the Editor…',
   onClose: how => { if (!how?.byClick) editor.focus(); },   // a click elsewhere puts focus where you clicked
-  avatar: { color: 'linear-gradient(160deg, #ffb340, #ff9500 55%, #d26a00)', svg: ICON.book.replace('stroke-width="2"', 'stroke-width="2.1"') },
-  placeholder: 'Ask the Librarian…',
+  avatar: { color: 'linear-gradient(160deg, #ffb340, #ff9500 55%, #d26a00)', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.4 3.6a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>' },
+  
   hello: {
     text: 'I keep your notes tidy and find what’s in them. Ask me to summarize, link related notes, file things away, or turn a meeting dump into clean notes. I edit the same Markdown files you do.',
     suggestions: () => S.path ? ['Summarize this note', 'Link this note to related ones', 'Turn this into clean, sectioned notes'] : ['What’s in my vault?', 'Start today’s note with my open tasks', 'Which notes link to nothing?'],

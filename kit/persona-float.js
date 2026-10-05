@@ -4,7 +4,7 @@
 //
 //   import { mountFloatingPersona } from '/kit/persona-float.js';
 //   mountFloatingPersona(document.querySelector('.page-pane'), {
-//     base: '/api/librarian', name: 'Librarian', avatar: { svg, color },
+//     base: '/api/editor', name: 'Editor', avatar: { svg, color },
 //     context: () => ({ label, ref, …fields }), placeholder: c => `Ask about ${c.label}…`,
 //     refFor, open, hello: { suggestions },            // as for mountPersona
 //   });

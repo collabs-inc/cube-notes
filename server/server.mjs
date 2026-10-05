@@ -1,7 +1,7 @@
-// Notes — an Obsidian-compatible vault for people and agents.
+// Cube Write — an Obsidian-compatible vault for people and agents.
 //   node server/server.mjs        → http://127.0.0.1:$PORT (as a Cube app: behind Cube's gate)
 //
-// The Librarian (the kit's persona) on the left, the page in the middle, the vault on the right. The vault is plain
+// The Editor (the kit's persona) on the left, the page in the middle, the vault on the right. The vault is plain
 // Markdown on disk (vault.mjs), so an agent can edit the files directly: every change on disk, from anyone, reaches
 // the page through /api/events, and a page that has unsaved typing gets a conflict instead of losing it.
 //
@@ -17,7 +17,7 @@
 //   GET  /api/file?path=&from=             an attachment (resolved by name like an embed)
 //   POST /api/upload?name=&from=           raw bytes → saved in the attachments folder → { name, path }
 //   GET  /api/events                       server-sent events: { type: "note", path, hash } · { type: "tree" }
-//   /api/librarian/…                       the persona (kit/persona.mjs)
+//   /api/editor/…                          the persona (kit/persona.mjs)
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -121,22 +121,22 @@ function relink(fromRel, toRel) {
   return touched;
 }
 
-// ---- the Librarian ----
+// ---- the Editor ----
 const fill = text => text.replaceAll('{{APP}}', APP).replaceAll('{{HOME}}', HOME).replaceAll('{{STATE}}', STATE).replaceAll('{{URL}}', URL_SELF);
-const librarian = createPersona({
-  name: 'Librarian',
-  dir: path.join(STATE, 'librarian'),
+const editor = createPersona({
+  name: 'Editor',
+  dir: path.join(STATE, 'editor'),
   cwd: HOME,
-  brief: () => { try { return fill(fs.readFileSync(path.join(APP, 'librarian', 'LIBRARIAN.md'), 'utf8')); } catch { return ''; } },
+  brief: () => { try { return fill(fs.readFileSync(path.join(APP, 'editor', 'EDITOR.md'), 'utf8')); } catch { return ''; } },
   env: () => ({ NOTES_APP: APP, NOTES_HOME: HOME, NOTES_STATE: STATE, NOTES_URL: URL_SELF }),
   models: { claude: process.env.NOTES_CLAUDE_MODEL, codex: process.env.NOTES_CODEX_MODEL },
   describe(c) {
     if (!c.note) return '';
     const n = vault.note(c.note);
     const sel = c.selection ? ` They have selected: «${String(c.selection).slice(0, 2000)}».` : '';
-    return `[Notes: the user is looking at the note ${c.note}${n ? ` (${HOME}/${c.note})` : ''}${c.line ? `, around line ${c.line}` : ''}.${sel}]`;
+    return `[Cube Write: the user is looking at the note ${c.note}${n ? ` (${HOME}/${c.note})` : ''}${c.line ? `, around line ${c.line}` : ''}.${sel}]`;
   },
-  eventPrompt: details => `[Notes: ${details.join('\n')}]`,
+  eventPrompt: details => `[Cube Write: ${details.join('\n')}]`,
 });
 
 // ---- http ----
@@ -162,7 +162,7 @@ function route(req, res) {
   const url = new URL(req.url, 'http://x');
   let p; try { p = decodeURIComponent(url.pathname); } catch { return send(res, 400, 'bad url', 'text/plain'); }
   const q = k => url.searchParams.get(k) || '';
-  if (librarian.route(req, res, p, '/api/librarian', { body, send })) return;
+  if (editor.route(req, res, p, '/api/editor', { body, send })) return;
   if (p === '/api/events') {
     res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive', 'x-accel-buffering': 'no' });
     res.write(': hi\n\n'); clients.add(res);
@@ -170,7 +170,7 @@ function route(req, res) {
     req.on('close', () => { clearInterval(ping); clients.delete(res); });
     return;
   }
-  if (p === '/api/vault') return send(res, 200, { home: HOME, app: APP, notes: vault.notes().length, obsidian: fs.existsSync(path.join(HOME, '.obsidian')), librarian: librarian.status() });
+  if (p === '/api/vault') return send(res, 200, { home: HOME, app: APP, notes: vault.notes().length, obsidian: fs.existsSync(path.join(HOME, '.obsidian')), editor: editor.status() });
   if (p === '/api/tree') return send(res, 200, { notes: vault.notes().map(noteView), folders: vault.folders(), files: vault.files().map(f => ({ path: f.path, name: f.name, size: f.size })) });
   if (p === '/api/note' && req.method === 'GET') {
     const { rel, abs } = inVault(q('path'), { md: true });
@@ -260,6 +260,6 @@ function route(req, res) {
 
 http.createServer((req, res) => {
   try { route(req, res); } catch (e) { if (!res.headersSent) send(res, 400, { error: String(e.message || e) }); else res.destroy(); }
-}).listen(PORT, '127.0.0.1', () => console.log(`Notes → ${URL_SELF}  (vault ${HOME})`));
+}).listen(PORT, '127.0.0.1', () => console.log(`Cube Write → ${URL_SELF}  (vault ${HOME})`));
 process.on('uncaughtException', e => console.error('notes: uncaught', e));
-for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, () => { librarian.shutdown(); process.exit(0); });
+for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, () => { editor.shutdown(); process.exit(0); });
