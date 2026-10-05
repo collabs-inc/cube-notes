@@ -28,7 +28,6 @@ export function mountFloatingPersona(host, opts) {
       <button class="pf-avatar" title="${esc(name)} (⌘J)" style="background:${avatar.color}">${avatar.svg}<span class="pf-ring"></span></button>
     </div>
     <div class="pf-stack"></div>
-    <div class="pf-status" hidden></div>
     <div class="pf-compose" hidden>
       <button class="pf-icon pf-history" title="The whole conversation">${ICON_LIST}</button>
       <textarea rows="1" spellcheck="true"></textarea>
@@ -37,7 +36,7 @@ export function mountFloatingPersona(host, opts) {
     <aside class="pf-drawer" hidden><div class="pf-drawer-head"><b>${esc(name)}</b><button class="pf-icon pf-close" title="Close">${ICON_X}</button></div><div class="pf-drawer-body"></div></aside>`;
   host.appendChild(root);
   const $ = s => root.querySelector(s);
-  const compose = $('.pf-compose'), text = $('textarea'), sendBtn = $('.pf-send'), stack = $('.pf-stack'), status = $('.pf-status');
+  const compose = $('.pf-compose'), text = $('textarea'), sendBtn = $('.pf-send'), stack = $('.pf-stack');
   const S = { busy: false, online: true, seen: new Set(), streams: new Map(), step: '' };
 
   // ---- bubbles ----
@@ -78,9 +77,7 @@ export function mountFloatingPersona(host, opts) {
   stack.addEventListener('mouseleave', () => { paused = false; for (const el of stack.children) if (el._life) schedule(el); });
 
   function setStatus() {
-    root.classList.toggle('busy', S.busy);
-    status.hidden = !S.busy;
-    status.innerHTML = `<span class="spinner"></span><span>${esc(S.step || 'Thinking…')}</span>`;
+    root.classList.toggle('busy', S.busy);           // the ring round the avatar is the only "working" sign
     const stop = S.busy && !text.value.trim();
     sendBtn.innerHTML = stop ? ICON_STOP : ICON_SEND;
     sendBtn.classList.toggle('stop', stop);
