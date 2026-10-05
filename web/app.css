@@ -77,8 +77,8 @@
 .cm-tooltip.cm-tooltip-autocomplete { background: var(--raised); border: 0; border-radius: 12px; box-shadow: var(--shadow-lg); padding: 4px; overflow: hidden; }
 .cm-tooltip.cm-tooltip-autocomplete > ul { font: 13px var(--font) !important; max-height: min(440px, 52vh) !important; min-width: 260px; }
 .cm-tooltip.cm-tooltip-autocomplete > ul > li { display: flex; align-items: center; gap: 10px; padding: 6px 10px !important; border-radius: 8px; color: var(--label); line-height: 1.3; }
-.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] { background: var(--accent); color: #fff; }
-.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionDetail { color: rgba(255, 255, 255, .8); }
+.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] { background: var(--fill-2); color: var(--label); }
+.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionDetail { color: var(--label-3); }
 .cm-completionLabel { flex: 1; }
 .cm-completionDetail { margin-left: auto !important; font: 12px var(--font) !important; font-style: normal !important; color: var(--label-3); }
 .cm-completionMatchedText { text-decoration: none !important; font-weight: 600; }
@@ -142,9 +142,9 @@
 /* a small menu and toasts */
 .menu { position: fixed; z-index: 60; min-width: 190px; background: var(--raised); border-radius: 10px; box-shadow: var(--shadow-lg); padding: 4px; }
 .menu button { display: block; width: 100%; text-align: left; padding: 6px 10px; border-radius: 7px; font-size: 13px; }
-.menu button:hover { background: var(--accent); color: #fff; }
+.menu button:hover { background: var(--fill-2); }
 .menu button.danger { color: var(--red); }
-.menu button.danger:hover { background: var(--red); color: #fff; }
+.menu button.danger:hover { background: var(--red-soft); }
 .menu hr { border: 0; height: .5px; background: var(--separator); margin: 4px 6px; }
 #toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 70; }
 #toast div { background: var(--label); color: var(--window); padding: 8px 14px; border-radius: 10px; font-size: 12.5px; box-shadow: var(--shadow-lg); }
