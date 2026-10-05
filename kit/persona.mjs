@@ -3,7 +3,7 @@
 // Cube's personas run). Messages you send, and events the app reports (a render ended, a loop ran), each become a
 // turn; events that arrive while a turn runs are folded into one waiting turn.
 //
-// This file is the kit's server half, shared by every app built on it (Cube Studio, Radar). The page half is
+// This file is the kit's server half, shared by every app built on it (Cube Studio, Cube Scout, Cube Write, Cube Library). The page half is
 // kit/persona.js. An app mounts the routes under a base path of its choosing:
 //
 //   GET  <base>/stream       server-sent events: a snapshot, then every change
