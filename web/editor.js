@@ -242,15 +242,19 @@ function livePreview(opts) {
 const refresh = StateEffect.define();
 
 // ---- completion: [[ note names, # tags, and the slash menu at the start of a line ----
+// [label, what it inserts, the shortcut shown at the right]; the order here is the order in the menu
+const today = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
 const SLASH = [
-  ['Heading 1', '# ', 'H1'], ['Heading 2', '## ', 'H2'], ['Heading 3', '### ', 'H3'],
-  ['To-do', '- [ ] ', '[ ]'], ['Bulleted list', '- ', '•'], ['Numbered list', '1. ', '1.'],
-  ['Quote', '> ', '❝'], ['Code block', '```\n\n```', '</>'], ['Divider', '---\n', '—'],
-  ['Table', '| Column | Column |\n| --- | --- |\n|  |  |\n', '▦'], ['Link to note', '[[', '[['], ['Callout', '> [!note]\n> ', 'ⓘ'],
+  ['Text', '', ''], ['Heading 1', '# ', '#'], ['Heading 2', '## ', '##'], ['Heading 3', '### ', '###'],
+  ['To-do', '- [ ] ', '[ ]'], ['Bulleted list', '- ', '-'], ['Numbered list', '1. ', '1.'],
+  ['Quote', '> ', '>'], ['Callout', '> [!note]\n> ', ''], ['Warning callout', '> [!warning]\n> ', ''], ['Tip callout', '> [!tip]\n> ', ''],
+  ['Code block', '```\n\n```', '```'], ['Table', '| Column | Column |\n| --- | --- |\n|  |  |\n', ''], ['Divider', '---\n', '---'],
+  ['Link to note', '[[', '[['], ['Embed a note', '![[', '![['], ['Image', '![[', ''], ['Highlight', '====', '=='],
+  ['Today’s date', () => today(), ''], ['Tag', '#', '#'], ['Footnote', '[^1]\n\n[^1]: ', ''],
 ];
 function completions(opts) {
   return autocompletion({
-    icons: false,
+    icons: false, maxRenderedOptions: 60,
     override: [
       ctx => {
         const m = ctx.matchBefore(/!?\[\[[^\[\]\n|#]*/);
@@ -277,12 +281,13 @@ function completions(opts) {
         const slash = line.from + ctx.state.sliceDoc(line.from, ctx.pos).indexOf('/');
         return {
           from: slash, validFor: /^\/[\w ]*$/,
-          options: SLASH.map(([label, insert, glyph]) => ({
-            label: '/' + label, displayLabel: label, detail: glyph, type: 'slash',
+          options: SLASH.map(([label, ins, key], i) => ({
+            label: '/' + label, displayLabel: label, detail: key, type: 'slash', boost: 99 - i,   // keep this order
             apply: (view, c, from, to) => {
-              const caret = insert.startsWith('```') ? from + 4 : from + insert.length;
+              const insert = typeof ins === 'function' ? ins() : ins;
+              const caret = insert.startsWith('```') ? from + 4 : insert === '====' ? from + 2 : insert.startsWith('[^1]') ? from + insert.length : from + insert.length;
               view.dispatch({ changes: { from, to, insert }, selection: { anchor: caret } });
-              if (insert === '[[') startCompletion(view);
+              if (insert.endsWith('[[') || insert === '#') startCompletion(view);
             },
           })),
         };
@@ -325,6 +330,11 @@ export function createEditor(parent, opts) {
         { key: 'Mod-k', run: v => wrap(v, '[[', ']]') }, { key: 'Mod-Enter', run: toggleTask },
         { key: 'Mod-s', run: () => { opts.onSave?.(); return true; } }]),
       cmPlaceholder(opts.placeholder || 'Start writing…'),
+      EditorView.theme({
+        '.cm-tooltip.cm-tooltip-autocomplete > ul': { fontFamily: 'var(--font)', fontSize: '13px', maxHeight: 'min(440px, 52vh)', minWidth: '260px' },
+        '.cm-tooltip.cm-tooltip-autocomplete > ul > li': { padding: '6px 10px', lineHeight: '1.35' },
+        '.cm-completionDetail': { fontFamily: 'var(--font)', fontStyle: 'normal', fontSize: '12px' },
+      }),
       listeners, paste,
       EditorView.contentAttributes.of({ spellcheck: 'true', autocorrect: 'on', autocapitalize: 'sentences' }),
     ],

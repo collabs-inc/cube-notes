@@ -75,12 +75,12 @@
 
 /* the slash menu and link suggestions: one line each, like Olivetti's */
 .cm-tooltip.cm-tooltip-autocomplete { background: var(--raised); border: 0; border-radius: 12px; box-shadow: var(--shadow-lg); padding: 4px; overflow: hidden; }
-.cm-tooltip.cm-tooltip-autocomplete > ul { font: 13px var(--font); max-height: 320px; min-width: 240px; }
+.cm-tooltip.cm-tooltip-autocomplete > ul { font: 13px var(--font) !important; max-height: min(440px, 52vh) !important; min-width: 260px; }
 .cm-tooltip.cm-tooltip-autocomplete > ul > li { display: flex; align-items: center; gap: 10px; padding: 6px 10px !important; border-radius: 8px; color: var(--label); line-height: 1.3; }
 .cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] { background: var(--accent); color: #fff; }
 .cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionDetail { color: rgba(255, 255, 255, .8); }
 .cm-completionLabel { flex: 1; }
-.cm-completionDetail { margin-left: auto !important; font: 11px var(--mono) !important; font-style: normal !important; color: var(--label-3); }
+.cm-completionDetail { margin-left: auto !important; font: 12px var(--font) !important; font-style: normal !important; color: var(--label-3); }
 .cm-completionMatchedText { text-decoration: none !important; font-weight: 600; }
 .cm-tooltip { font-family: var(--font); }
 .cm-panels { background: var(--raised); border-color: var(--separator) !important; }
