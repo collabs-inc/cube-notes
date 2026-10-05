@@ -154,3 +154,30 @@
 
 @media (max-width: 1100px) { .page { padding: 20px 32px 30vh; } .title { font-size: 2rem; padding-top: 2rem; } }
 @media (max-width: 900px) { .page { padding: 12px 18px 30vh; } .shell > .pane-main { order: 1; } }
+
+/* ---- motion: small, quick, and only where a state changes ---- */
+@keyframes up-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes down-in { from { opacity: 0; transform: translateY(-6px); } }
+@keyframes pop { 0% { transform: scale(.7); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@keyframes glow { 0% { background: color-mix(in srgb, var(--accent) 22%, transparent); } 100% { background: transparent; } }
+@keyframes menu-in { from { opacity: 0; transform: translateY(-4px) scale(.985); } }
+.enter { animation: up-in .26s cubic-bezier(.2, .8, .2, 1); }
+.enter-fade { animation: fade-in .3s ease-out; }
+.enter-down { animation: down-in .24s cubic-bezier(.2, .8, .2, 1); }
+.cm-check.on { animation: pop .22s ease-out; }
+.cm-flash { animation: glow 2.2s ease-out; border-radius: 3px; }
+.cm-tooltip.cm-tooltip-autocomplete { animation: menu-in .14s ease-out; transform-origin: top left; }
+.stagger > *, .stagger .ref, .stagger .res { animation: up-in .28s cubic-bezier(.2, .8, .2, 1) both; }
+.stagger .ref:nth-of-type(2), .stagger .res:nth-of-type(2) { animation-delay: 30ms; }
+.stagger .ref:nth-of-type(3), .stagger .res:nth-of-type(3) { animation-delay: 60ms; }
+.stagger .ref:nth-of-type(4), .stagger .res:nth-of-type(4) { animation-delay: 90ms; }
+.stagger .ref:nth-of-type(n+5), .stagger .res:nth-of-type(n+5) { animation-delay: 120ms; }
+.row-in { animation: up-in .22s cubic-bezier(.2, .8, .2, 1) both; }
+.toast-in { animation: up-in .22s cubic-bezier(.2, .8, .2, 1); }
+.menu { animation: menu-in .14s ease-out; transform-origin: top right; }
+.blank-page:not([hidden]) > div { animation: up-in .3s cubic-bezier(.2, .8, .2, 1); }
+.tn, .ref, .res, .grp-h .chev, .tn .chev { transition: background .12s, color .12s, transform .15s; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

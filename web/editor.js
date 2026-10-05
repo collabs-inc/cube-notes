@@ -4,7 +4,7 @@
 // line you are editing, everything is raw.
 //
 // Bundled to editor.bundle.js (npm run build), so the app installs with no build step.
-import { EditorState, StateEffect } from '@codemirror/state';
+import { EditorState, StateEffect, StateField } from '@codemirror/state';
 import { EditorView, Decoration, ViewPlugin, WidgetType, keymap, drawSelection, dropCursor, placeholder as cmPlaceholder } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown, markdownLanguage, markdownKeymap } from '@codemirror/lang-markdown';
@@ -241,6 +241,21 @@ function livePreview(opts) {
 }
 const refresh = StateEffect.define();
 
+// A change that came from outside (the Editor, Obsidian, git) glows for a moment where it landed.
+const flashOn = StateEffect.define(), flashOff = StateEffect.define();
+const flashField = StateField.define({
+  create: () => Decoration.none,
+  update(deco, tr) {
+    deco = deco.map(tr.changes);
+    for (const e of tr.effects) {
+      if (e.is(flashOn)) deco = deco.update({ add: [Decoration.mark({ class: 'cm-flash' }).range(e.value.from, e.value.to)] });
+      if (e.is(flashOff)) deco = Decoration.none;
+    }
+    return deco;
+  },
+  provide: f => EditorView.decorations.from(f),
+});
+
 // ---- completion: [[ note names, # tags, and the slash menu at the start of a line ----
 // [label, what it inserts, the shortcut shown at the right]; the order here is the order in the menu
 const today = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
@@ -335,7 +350,7 @@ export function createEditor(parent, opts) {
         '.cm-tooltip.cm-tooltip-autocomplete > ul > li': { padding: '6px 10px', lineHeight: '1.35' },
         '.cm-completionDetail': { fontFamily: 'var(--font)', fontStyle: 'normal', fontSize: '12px' },
       }),
-      listeners, paste,
+      listeners, paste, flashField,
       EditorView.contentAttributes.of({ spellcheck: 'true', autocorrect: 'on', autocapitalize: 'sentences' }),
     ],
   });
@@ -351,12 +366,17 @@ export function createEditor(parent, opts) {
     view,
     getDoc: () => view.state.doc.toString(),
     // Replace the text with what is on disk, changing only the part that differs, so the cursor and scroll stay put.
-    setDoc(text) {
+    setDoc(text, { flash = false } = {}) {
       const cur = view.state.doc.toString();
       if (cur === text) return;
       let a = 0; while (a < cur.length && a < text.length && cur[a] === text[a]) a++;
       let b = 0; while (b < cur.length - a && b < text.length - a && cur[cur.length - 1 - b] === text[text.length - 1 - b]) b++;
-      view.dispatch({ changes: { from: a, to: cur.length - b, insert: text.slice(a, text.length - b) }, annotations: [] });
+      const insert = text.slice(a, text.length - b);
+      view.dispatch({ changes: { from: a, to: cur.length - b, insert } });
+      if (flash && insert.trim()) {
+        view.dispatch({ effects: flashOn.of({ from: a, to: a + insert.length }) });
+        clearTimeout(view._flash); view._flash = setTimeout(() => view.dispatch({ effects: flashOff.of(null) }), 2200);
+      }
     },
     refresh() { view.dispatch({ effects: refresh.of(null) }); },
     focus() { view.focus(); },

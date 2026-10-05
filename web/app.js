@@ -14,7 +14,7 @@ const api = async (p, opts = {}) => {
   return b;
 };
 const post = (p, b) => api(p, { method: 'POST', body: JSON.stringify(b || {}) });
-const toast = msg => { $('toast').innerHTML = `<div>${esc(msg)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => { $('toast').innerHTML = ''; }, 2600); };
+const toast = msg => { $('toast').innerHTML = `<div class="toast-in">${esc(msg)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => { $('toast').innerHTML = ''; }, 2600); };
 
 const ICON = {
   doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/></svg>',
@@ -58,9 +58,9 @@ const editor = createEditor($('editor'), {
   onSave: () => save(),
 });
 let applying = false;            // true while the page writes into the editor itself (loading, taking disk changes)
-const setText = (text, { reset = false } = {}) => {
+const setText = (text, { reset = false, flash = false } = {}) => {
   applying = true;
-  try { if (reset) { editor.view.dispatch({ changes: { from: 0, to: editor.view.state.doc.length, insert: text }, selection: { anchor: 0 } }); } else editor.setDoc(text); }
+  try { if (reset) { editor.view.dispatch({ changes: { from: 0, to: editor.view.state.doc.length, insert: text }, selection: { anchor: 0 } }); } else editor.setDoc(text, { flash }); }
   finally { applying = false; }
 };
 
@@ -68,7 +68,13 @@ const setText = (text, { reset = false } = {}) => {
 let saveTimer = null;
 const scheduleSave = () => { clearTimeout(saveTimer); saveTimer = setTimeout(save, 600); };
 function saveState() {
-  $('saveState').textContent = S.conflict ? 'Not saved' : S.saving ? 'Saving…' : S.dirty ? 'Edited' : S.path ? 'Saved' : '';
+  const t = S.conflict ? 'Not saved' : S.saving ? 'Saving…' : S.dirty ? 'Edited' : S.path ? 'Saved' : '';
+  if ($('saveState').textContent !== t) { $('saveState').textContent = t; enter($('saveState'), 'fade'); }
+}
+// replay an entrance animation on an element (see app.css: .enter, .enter-fade)
+function enter(el, kind = 'up') {
+  const cls = kind === 'fade' ? 'enter-fade' : 'enter';
+  el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
 }
 async function save() {
   clearTimeout(saveTimer);
@@ -90,7 +96,7 @@ async function save() {
 }
 function showConflict(text, hash) {
   S.conflict = { text, hash };
-  $('banner').hidden = false;
+  $('banner').hidden = false; $('banner').classList.remove('enter-down'); void $('banner').offsetWidth; $('banner').classList.add('enter-down');
   $('banner').innerHTML = `<b>This note changed on disk</b> while you were typing (an agent, Obsidian or git).<span class="gap"></span>
     <button class="btn" data-c="theirs">Use the disk version</button><button class="btn primary" data-c="mine">Keep mine</button>`;
   saveState();
@@ -118,6 +124,7 @@ async function openNote(path, { push = true, line } = {}) {
   history.replaceState(null, '', '#' + encodeURI(note.path));
   try { localStorage.setItem('notes-last', note.path); } catch {}
   showPage(true);
+  enter($('page'));
   renderHeader(); renderSide(); loadLinked(); saveState();
   if (line) editor.scrollToLine(line); else $('scroll').scrollTop = 0;
   persona?.refreshContext();
@@ -178,6 +185,7 @@ async function loadLinked() {
   const [links, mentions] = await Promise.all([api(`/api/backlinks?path=${encodeURIComponent(path)}`), api(`/api/mentions?path=${encodeURIComponent(path)}`)]);
   if (S.path !== path) return;
   const row = r => `<button class="ref" data-open="${esc(r.path)}"><b>${esc(r.name)}</b>${(r.snippets || []).slice(0, 2).map(s => `<span>${esc(s)}</span>`).join('')}</button>`;
+  $('linked').classList.remove('stagger'); void $('linked').offsetWidth; $('linked').classList.add('stagger');
   $('linked').innerHTML =
     (links.length ? `<h3>Linked mentions · ${links.length}</h3>${links.map(row).join('')}` : '') +
     (mentions.length ? `<h3 class="gap">Unlinked mentions · ${mentions.length}</h3>${mentions.slice(0, 8).map(row).join('')}` : '');
@@ -219,9 +227,11 @@ function group(id, title, body, end = '') {
 function renderSide() {
   if (S.results) {
     const rs = S.results;
+    $('side').classList.add('stagger');
     $('side').innerHTML = group('results', S.tagFilter ? `#${S.tagFilter}` : 'Results', rs.length ? rs.map(r => `<button class="res" data-open="${esc(r.path)}"><b>${esc(r.name)}</b>${r.dir ? `<i>${esc(r.dir)}</i>` : ''}${r.snippet ? `<span>${esc(r.snippet)}</span>` : ''}</button>`).join('') : '<div class="empty" style="padding:6px 8px">Nothing found.</div>', `${rs.length}`);
     return;
   }
+  $('side').classList.remove('stagger');
   const recent = [...S.tree.notes].sort((a, b) => b.mtime - a.mtime).slice(0, 5);
   const n = S.tree.notes.find(x => x.path === S.path);
   const outline = n ? (outlineOf(editor.getDoc())) : [];
@@ -238,7 +248,7 @@ const outlineOf = text => {
 };
 $('side').onclick = e => {
   const t = e.target.closest('[data-toggle]'); if (t) { const id = t.dataset.toggle; S.closed.has(id) ? S.closed.delete(id) : S.closed.add(id); keep(); renderSide(); return; }
-  const f = e.target.closest('[data-folder]'); if (f) { const p = f.dataset.folder; S.open.has(p) ? S.open.delete(p) : S.open.add(p); keep(); renderSide(); return; }
+  const f = e.target.closest('[data-folder]'); if (f) { const p = f.dataset.folder, opening = !S.open.has(p); opening ? S.open.add(p) : S.open.delete(p); keep(); renderSide(); if (opening) $('side').querySelectorAll(`[data-open^="${CSS.escape(p)}/"], [data-folder^="${CSS.escape(p)}/"]`).forEach((el, i) => { el.style.animationDelay = `${Math.min(i, 12) * 18}ms`; el.classList.add('row-in'); }); return; }
   const o = e.target.closest('[data-open]'); if (o) { openNote(o.dataset.open); return; }
   const l = e.target.closest('[data-line]'); if (l) { editor.scrollToLine(Number(l.dataset.line)); editor.focus(); return; }
   const g = e.target.closest('[data-tag]'); if (g) showTag(g.dataset.tag);
@@ -357,7 +367,7 @@ function live() {
         const note = await api(`/api/note?path=${encodeURIComponent(S.path)}`).catch(() => null);
         if (!note || note.hash === S.base) return;
         if (S.dirty || S.saving) showConflict(note.text, note.hash);
-        else { setText(note.text); S.base = note.hash; saveState(); renderSide(); }
+        else { setText(note.text, { flash: true }); S.base = note.hash; saveState(); renderSide(); }
       }
       if (ev.path !== S.path) loadLinked();
       clearTimeout(live.t); live.t = setTimeout(async () => { await loadTree(); renderSide(); }, 300);
