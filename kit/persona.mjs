@@ -202,7 +202,8 @@ export function createPersona({ name, dir, cwd, brief, env = () => ({}), describ
   const pushStatus = () => broadcast({ type: 'status', ...status() });
   const agentEnv = () => ({ ...process.env, ...env() });
 
-  function run(prompt, { fresh = false } = {}) {
+  // quiet: a background turn (tagging, upkeep) whose replies stay in the history but don't pop up (persona-float)
+  function run(prompt, { fresh = false, quiet = false } = {}) {
     const agent = current(), A = AGENTS[agent];
     busy = true; stopping = false; pushStatus();
     const session = fresh ? null : sessionOf(agent);
@@ -222,7 +223,7 @@ export function createPersona({ name, dir, cwd, brief, env = () => ({}), describ
         else if (op.text) {
           const [key, delta] = op.text;
           let it = texts.get(key);
-          if (!it) { it = { id: newId(), at: Date.now(), role: 'assistant', text: '', pending: true }; texts.set(key, it); put(it, { persist: false }); }
+          if (!it) { it = { id: newId(), at: Date.now(), role: 'assistant', text: '', pending: true, ...(quiet ? { quiet: true } : {}) }; texts.set(key, it); put(it, { persist: false }); }
           it.text += delta; broadcast({ type: 'delta', id: it.id, text: delta });
         } else if (op.textEnd) endText(op.textEnd);
         else if (op.tool) {
@@ -251,7 +252,7 @@ export function createPersona({ name, dir, cwd, brief, env = () => ({}), describ
           // the saved session is gone (another machine, a wiped cache): start over, once
           setSession(agent, null);
           put({ id: newId(), at: Date.now(), role: 'system', text: 'The previous conversation could not be resumed; starting a new one.' });
-          return run(prompt, { fresh: true });
+          return run(prompt, { fresh: true, quiet });
         } else if (stopping) put({ id: newId(), at: Date.now(), role: 'system', text: 'Stopped.' });
         else if (code !== 0 && !failed) put({ id: newId(), at: Date.now(), role: 'error', text: short(stderr || `${A.label} exited with code ${code}.`, 1200) });
         busy = false;
@@ -265,7 +266,7 @@ export function createPersona({ name, dir, cwd, brief, env = () => ({}), describ
     if (!m) { pushStatus(); return; }
     const it = items.get(m.id);
     if (it?.queued) { it.queued = false; put(it); }
-    run(m.prompt);
+    run(m.prompt, { quiet: Boolean(m.quiet) });
   }
 
   // a message in the column (yours, or one the app writes for you, such as a pinned note)
@@ -328,8 +329,8 @@ export function createPersona({ name, dir, cwd, brief, env = () => ({}), describ
         put(it); return it;
       }
       const it = put({ id: newId(), at: Date.now(), role: 'event', text, ...extra, queued: busy });
-      const m = { id: it.id, event: true, details: [detail], prompt: eventPrompt([detail]) };
-      if (busy) { waiting.push(m); pushStatus(); } else run(m.prompt);
+      const m = { id: it.id, event: true, quiet: Boolean(extra.quiet), details: [detail], prompt: eventPrompt([detail]) };
+      if (busy) { waiting.push(m); pushStatus(); } else run(m.prompt, { quiet: m.quiet });
       return it;
     },
     setAgent(agent) {

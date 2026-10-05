@@ -93,12 +93,14 @@ export function mountFloatingPersona(host, opts) {
       else if (ev.type === 'item') {
         const it = ev.item;
         if (it.role === 'tool') { if (it.status === 'running') S.step = it.text; }
+        else if (it.quiet) { S.seen.add(it.id); }       // a background turn: in the history, not in a bubble
         else if (it.role === 'user' || it.role === 'error' || (it.role === 'assistant' && it.text.trim())) {
           if (!S.seen.has(it.id) || bubbles.has(it.id)) bubble(it);
           S.seen.add(it.id);
           if (it.role === 'assistant') { S.streams.set(it.id, it); S.step = ''; }
         }
       } else if (ev.type === 'delta') {
+        if (S.seen.has(ev.id) && !bubbles.has(ev.id) && !S.streams.has(ev.id)) return;
         const it = S.streams.get(ev.id) || { id: ev.id, role: 'assistant', text: '', pending: true };
         it.text += ev.text; it.pending = true; S.streams.set(ev.id, it);
         if (it.text.trim()) bubble(it);
