@@ -9,7 +9,7 @@ import { EditorView, Decoration, ViewPlugin, WidgetType, keymap, drawSelection, 
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown, markdownLanguage, markdownKeymap } from '@codemirror/lang-markdown';
 import { syntaxTree, indentOnInput } from '@codemirror/language';
-import { autocompletion, completionKeymap, startCompletion } from '@codemirror/autocomplete';
+import { autocompletion, completionKeymap, startCompletion, setSelectedCompletion, completionStatus } from '@codemirror/autocomplete';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 
 // ---- widgets ----
@@ -340,6 +340,13 @@ export function createEditor(parent, opts) {
     ],
   });
   const view = new EditorView({ state, parent });
+  // the menu's selection follows the mouse, as a native menu's does (the tooltip lives outside the editor's DOM)
+  document.addEventListener('mousemove', e => {
+    const li = e.target.closest?.('.cm-tooltip-autocomplete li');
+    if (!li || completionStatus(view.state) !== 'active') return;
+    const i = Number(/-(\d+)$/.exec(li.id || '')?.[1]);
+    if (Number.isInteger(i) && li.getAttribute('aria-selected') !== 'true') view.dispatch({ effects: setSelectedCompletion(i) });
+  });
   return {
     view,
     getDoc: () => view.state.doc.toString(),
