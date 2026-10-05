@@ -284,7 +284,7 @@ input[type=range] { accent-color: var(--accent); }
 .sheet-body { overflow: auto; padding: 14px 18px 18px; }
 
 /* ---- the floating persona (kit/persona-float.js): an avatar in a corner, bubbles that fade ---- */
-.pf { position: absolute; top: 10px; right: 14px; z-index: 30; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; width: min(380px, calc(100% - 28px)); }
+.pf { position: absolute; top: 10px; right: 14px; z-index: 30; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; width: min(360px, calc(100% - 28px)); }
 .pf > * { pointer-events: auto; }
 .pf-corner { display: flex; align-items: flex-start; gap: 8px; }
 .pf-avatar { position: relative; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: #fff; flex: none; box-shadow: 0 2px 8px rgba(0, 0, 0, .18), inset 0 0 0 .5px rgba(0, 0, 0, .12); transition: transform .15s; }
@@ -292,15 +292,15 @@ input[type=range] { accent-color: var(--accent); }
 .pf-avatar svg { width: 15px; height: 15px; }
 .pf-ring { position: absolute; inset: -4px; border-radius: 50%; border: 2px solid transparent; }
 .pf.busy .pf-ring { border-top-color: var(--orange); border-right-color: color-mix(in srgb, var(--orange) 40%, transparent); animation: kit-spin .9s linear infinite; }
-.pf-compose { display: flex; align-items: flex-end; gap: 4px; width: 100%; background: var(--raised); border-radius: 17px; padding: 4px 4px 4px 6px; box-shadow: var(--shadow-lg); animation: pf-pop .16s ease-out; }
+.pf-compose { display: flex; align-items: center; gap: 2px; width: min(300px, 100%); min-height: 32px; background: var(--raised); border-radius: 16px; padding: 4px; box-shadow: var(--shadow-lg); animation: pf-pop .16s ease-out; }
 .pf-compose[hidden] { display: none; }
-.pf-compose textarea { flex: 1; min-width: 0; resize: none; border: 0; outline: none; background: none; font: 13.5px/1.45 var(--font); padding: 4px 2px; max-height: 140px; color: var(--label); }
+.pf-compose textarea { flex: 1; min-width: 0; resize: none; border: 0; outline: none; background: none; font: 13px/18px var(--font); padding: 3px 4px; max-height: 120px; color: var(--label); align-self: center; }
 .pf-compose textarea::placeholder { color: var(--label-3); }
-.pf-icon { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: var(--label-3); flex: none; }
+.pf-icon { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; color: var(--label-3); flex: none; align-self: flex-end; }
 .pf-icon:hover { background: var(--fill-2); color: var(--label); }
-.pf-icon svg { width: 14px; height: 14px; }
-.pf-send { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; flex: none; }
-.pf-send svg { width: 13px; height: 13px; }
+.pf-icon svg { width: 13px; height: 13px; }
+.pf-send { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; flex: none; align-self: flex-end; }
+.pf-send svg { width: 12px; height: 12px; }
 .pf-send:disabled { background: var(--fill); color: var(--label-3); cursor: default; }
 .pf-send.stop { background: var(--label); color: var(--window); }
 .pf-status { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; padding: 5px 11px; border-radius: 13px; background: var(--raised); box-shadow: var(--shadow); font-size: 12px; color: var(--label-2); }
