@@ -15,6 +15,8 @@ const ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 const ICON_STOP = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>';
 const ICON_NEW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.4 3.6a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 const ICON_CHEV = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>';
+const ICON_CLIP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.4 11.1-8.5 8.5a5.5 5.5 0 0 1-7.8-7.8l8.5-8.5a3.7 3.7 0 0 1 5.2 5.2l-8.5 8.5a1.8 1.8 0 0 1-2.6-2.6l7.8-7.8"/></svg>';
+const IMAGE = /\.(png|jpe?g|gif|webp)$/i;
 const ICON_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/><path d="M3.3 15.3A1 1 0 0 0 4 17h16a1 1 0 0 0 .7-1.7C19.4 14 18 12.5 18 8A6 6 0 0 0 6 8c0 4.5-1.4 6-2.7 7.3"/></svg>';
 
 // A small, safe Markdown: escape first, then paragraphs, lists, headings, code, bold, italics and links.
@@ -42,7 +44,7 @@ export function md(src, refFor = () => null) {
 
 export function mountPersona(root, opts) {
   const { base, name, role = '', avatar, hello = {}, placeholder = `Message ${name}…`, context = () => null, refFor = () => null, open = () => {} } = opts;
-  const S = { items: [], byId: new Map(), busy: false, queued: 0, agent: 'claude', installed: ['claude'], labels: { claude: 'Claude Code', codex: 'Codex' }, attach: true, shown: false, online: true };
+  const S = { files: [], items: [], byId: new Map(), busy: false, queued: 0, agent: 'claude', installed: ['claude'], labels: { claude: 'Claude Code', codex: 'Codex' }, attach: true, shown: false, online: true };
   const av = (cls = '') => `<div class="persona-avatar ${cls}" style="background:${avatar.color}">${avatar.svg}</div>`;
   root.classList.add('persona');
   root.innerHTML = `
@@ -54,9 +56,11 @@ export function mountPersona(root, opts) {
     <div class="persona-msgs"></div>
     <div class="persona-compose">
       <div class="persona-ctx"></div>
-      <div class="persona-box"><textarea rows="1" placeholder="${esc(placeholder)}"></textarea><button class="persona-send" title="Send">${ICON_SEND}</button></div>
+      <div class="persona-files"></div>
+      <div class="persona-box"><button class="persona-attach" title="Attach an image or file (or drop it here, or paste it)">${ICON_CLIP}</button><input class="persona-file" type="file" multiple hidden><textarea rows="1" placeholder="${esc(placeholder)}"></textarea><button class="persona-send" title="Send">${ICON_SEND}</button></div>
     </div>
-    <div class="persona-grip" title="Drag to resize"></div>`;
+    <div class="persona-grip" title="Drag to resize"></div>
+    <div class="persona-drop">Drop to attach</div>`;
   const $ = s => root.querySelector(s);
   const msgs = $('.persona-msgs'), text = $('textarea'), sendBtn = $('.persona-send'), agentSel = $('.persona-agent');
   const nearBottom = () => msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 80;
@@ -64,7 +68,10 @@ export function mountPersona(root, opts) {
   function userHtml(it) {
     const c = it.context;
     const chip = c?.label ? `<div class="msg-ctx"><button class="${c.pin ? 'pin' : ''}" data-ref="${esc(JSON.stringify(c.ref ?? null))}">${esc(c.label)}</button></div>` : '';
-    return `${chip}<div class="msg user${it.queued ? ' queued' : ''}${it.dropped ? ' dropped' : ''}">${esc(it.text)}</div>`;
+    const files = (it.files || []).map(f => IMAGE.test(f.file)
+      ? `<a class="msg-file img" href="${base}/uploads/${encodeURIComponent(f.file)}" target="_blank" rel="noopener" title="${esc(f.name)}"><img src="${base}/uploads/${encodeURIComponent(f.file)}" alt="${esc(f.name)}" loading="lazy"></a>`
+      : `<a class="msg-file" href="${base}/uploads/${encodeURIComponent(f.file)}" target="_blank" rel="noopener">${ICON_CLIP}<span>${esc(f.name)}</span></a>`).join('');
+    return `${chip}${files ? `<div class="msg-files">${files}</div>` : ''}<div class="msg user${it.queued ? ' queued' : ''}${it.dropped ? ' dropped' : ''}">${esc(it.text)}</div>`;
   }
   function itemHtml(it) {
     if (it.role === 'user') return userHtml(it);
@@ -109,11 +116,12 @@ export function mountPersona(root, opts) {
     root.classList.toggle('busy', S.busy);
     root.classList.toggle('off', off);
     $('.state').textContent = !S.online ? 'Reconnecting…' : off ? `Needs ${S.labels[S.agent] || S.agent}` : S.busy ? (S.queued ? `Working · ${S.queued} waiting` : 'Working…') : (role || 'Ready');
-    const stop = S.busy && !text.value.trim();
+    const has = text.value.trim() || S.files.some(f => f.file);
+    const stop = S.busy && !has;
     sendBtn.classList.toggle('stop', stop);
     sendBtn.innerHTML = stop ? ICON_STOP : ICON_SEND;
     sendBtn.title = stop ? 'Stop' : S.busy ? 'Send after this turn' : 'Send';
-    sendBtn.disabled = !stop && !text.value.trim();
+    sendBtn.disabled = !stop && (!has || S.files.some(f => f.uploading));
   }
   function refreshContext() {
     const c = context();
@@ -143,12 +151,43 @@ export function mountPersona(root, opts) {
   const post = (p, b = {}) => fetch(`${base}${p}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b) });
   async function say(t) {
     t = String(t || '').trim();
-    if (!t) return;
+    const files = S.files.filter(f => f.file);
+    if ((!t && !files.length) || S.files.some(f => f.uploading)) return;
     const c = S.attach ? context() : null;
-    text.value = ''; grow(); ui();
-    const r = await post('/send', { text: t, context: c });
-    if (!r.ok) { text.value = t; grow(); ui(); }
+    text.value = ''; S.files = []; showFiles(); grow(); ui();
+    const r = await post('/send', { text: t, context: c, attachments: files.map(f => ({ file: f.file })) });
+    if (!r.ok) { text.value = t; S.files = files; showFiles(); grow(); ui(); }
   }
+  // attachments: drop files on the column, paste them, or pick them with the paper clip
+  const filesEl = $('.persona-files'), picker = $('.persona-file');
+  function showFiles() {
+    filesEl.innerHTML = S.files.map((f, i) => `<span class="file${f.uploading ? ' up' : ''}${f.error ? ' err' : ''}" title="${esc(f.error || f.name)}">` +
+      (f.preview ? `<img src="${f.preview}" alt="">` : ICON_CLIP) + `<span>${esc(f.error || f.name)}</span><button data-i="${i}" aria-label="Remove">×</button></span>`).join('');
+  }
+  async function attach(list) {
+    for (const file of [...list]) {
+      const f = { name: file.name || 'pasted.png', uploading: true, preview: /^image\//.test(file.type) ? URL.createObjectURL(file) : '' };
+      S.files.push(f); showFiles(); ui();
+      try {
+        const r = await fetch(`${base}/upload?name=${encodeURIComponent(f.name)}`, { method: 'POST', headers: { 'content-type': 'application/octet-stream' }, body: file });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || r.statusText);
+        Object.assign(f, { file: j.file, name: j.name });
+      } catch (e) { f.error = `${f.name}: ${e.message || e}`; }
+      f.uploading = false; showFiles(); ui();
+    }
+    text.focus();
+  }
+  filesEl.addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (b) { S.files.splice(Number(b.dataset.i), 1); showFiles(); ui(); } });
+  $('.persona-attach').onclick = () => picker.click();
+  picker.onchange = () => { attach(picker.files); picker.value = ''; };
+  text.addEventListener('paste', e => { const fs = [...(e.clipboardData?.files || [])]; if (fs.length) { e.preventDefault(); attach(fs); } });
+  let dragDepth = 0;
+  const hasFiles = e => [...(e.dataTransfer?.types || [])].includes('Files');
+  root.addEventListener('dragenter', e => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth++; root.classList.add('dropping'); });
+  root.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+  root.addEventListener('dragleave', e => { if (!hasFiles(e)) return; if (--dragDepth <= 0) { dragDepth = 0; root.classList.remove('dropping'); } });
+  root.addEventListener('drop', e => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth = 0; root.classList.remove('dropping'); attach(e.dataTransfer.files); });
   const grow = () => { text.style.height = 'auto'; text.style.height = Math.min(180, text.scrollHeight) + 'px'; };
   text.addEventListener('input', () => { grow(); ui(); });
   text.addEventListener('keydown', e => {

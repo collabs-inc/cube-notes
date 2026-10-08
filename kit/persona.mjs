@@ -11,6 +11,9 @@
 //   POST <base>/stop         ends the running turn and drops what was waiting
 //   POST <base>/reset        starts a new conversation
 //   POST <base>/agent        { agent: "claude" | "codex" }   switches agent (a new conversation)
+//   POST <base>/upload?name= the raw bytes of a file you dropped or pasted → { file, name, type, size }; kept in
+//                            <dir>/uploads and sent with the next message, by path, for the agent to open
+//   GET  <base>/uploads/<file>  an uploaded file, for the column to show
 //
 // It keeps <dir>/transcript.jsonl (what the column shows) and <dir>/settings.json (the chosen agent and each
 // agent's session id). work() runs a separate, one-off agent session for a background job (a loop) and keeps its
@@ -161,6 +164,10 @@ export function runAgent({ agent, prompt, session, brief, cwd, env, model, onOp,
 export function createPersona({ name, dir, cwd, brief, env = () => ({}), describe = () => '', eventPrompt, models = {} }) {
   fs.mkdirSync(dir, { recursive: true });
   const TRANSCRIPT = path.join(dir, 'transcript.jsonl'), SETTINGS = path.join(dir, 'settings.json');
+  // files the user drops into the column: <dir>/uploads/<time>-<name>, at most 25 MB each
+  const UPLOADS = path.join(dir, 'uploads'), MAX_UPLOAD = 25e6;
+  const uploadName = f => f.replace(/^\d{8}-\d{6}-\d{3}-/, '');
+  const UPLOAD_TYPES = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.pdf': 'application/pdf', '.txt': 'text/plain', '.md': 'text/markdown', '.json': 'application/json', '.mp4': 'video/mp4', '.mov': 'video/quicktime' };
   const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return d; } };
   const settings = () => readJson(SETTINGS, {});
   const saveSettings = patch => { const next = { ...settings(), ...patch }; fs.writeFileSync(SETTINGS, JSON.stringify(next, null, 2)); return next; };
@@ -312,11 +319,18 @@ export function createPersona({ name, dir, cwd, brief, env = () => ({}), describ
 
   const persona = {
     status, inject, work, readRun,
-    send(text, context) {
+    send(text, context, attachments = []) {
       text = String(text || '').trim().slice(0, 8000);
-      if (!text) throw new Error('empty message');
+      // only files that were uploaded here, by their stored name
+      const files = (Array.isArray(attachments) ? attachments : []).slice(0, 10)
+        .map(a => path.basename(String(a?.file || ''))).filter(f => f && fs.existsSync(path.join(UPLOADS, f)))
+        .map(f => ({ file: f, name: uploadName(f) }));
+      if (!text && !files.length) throw new Error('empty message');
       const ctx = describe(context || {});
-      return inject(text, ctx ? `${ctx}\n\n${text}` : text, context?.label ? { context: { label: context.label, ref: context.ref ?? null } } : {});
+      const att = files.length ? `\n\n[The user attached ${files.length > 1 ? 'these files' : 'this file'}; open ${files.length > 1 ? 'them' : 'it'} with the Read tool:\n${files.map(f => `- ${path.join(UPLOADS, f.file)}`).join('\n')}]` : '';
+      const said = text || (files.length > 1 ? `${files.length} files` : files[0].name);
+      const extra = { ...(context?.label ? { context: { label: context.label, ref: context.ref ?? null } } : {}), ...(files.length ? { files } : {}) };
+      return inject(said, `${ctx ? `${ctx}\n\n` : ''}${text || '(see the attachment)'}${att}`, extra);
     },
     // Something happened in the app that the persona supervises. Events that arrive while a turn runs are folded
     // into one waiting turn, so ten jobs ending overnight cost one turn, not ten.
@@ -369,8 +383,32 @@ export function createPersona({ name, dir, cwd, brief, env = () => ({}), describ
       if (!p.startsWith(base + '/')) return false;
       const r = p.slice(base.length);
       if (r === '/stream') { persona.stream(req, res); return true; }
+      if (r.startsWith('/uploads/') && req.method === 'GET') {
+        const f = path.join(UPLOADS, path.basename(decodeURIComponent(r.slice(9))));
+        let st; try { st = fs.statSync(f); } catch { send(res, 404, 'not found', 'text/plain'); return true; }
+        const type = UPLOAD_TYPES[path.extname(f).toLowerCase()] || 'application/octet-stream';
+        // shown inline only when it can't run script; anything else downloads
+        res.writeHead(200, { 'content-type': type, 'content-length': st.size, 'cache-control': 'max-age=31536000, immutable', 'x-content-type-options': 'nosniff',
+          'content-disposition': /^image\/(png|jpeg|gif|webp)$|^video\//.test(type) ? 'inline' : 'attachment' });
+        fs.createReadStream(f).pipe(res); return true;
+      }
       if (req.method !== 'POST') return false;
-      if (r === '/send') { body(req, res, b => send(res, 200, persona.send(b.text, b.context))); return true; }
+      if (r === '/upload' || r.startsWith('/upload?')) {
+        const raw = new URL(req.url, 'http://x').searchParams.get('name') || 'file';
+        const safe = path.basename(raw).replace(/[^\w.-]+/g, '_').replace(/^\.+/, '').slice(-80) || 'file';
+        const d = new Date(), pad = (n, k = 2) => String(n).padStart(k, '0');
+        const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}-${pad(d.getMilliseconds(), 3)}`;
+        const file = `${stamp}-${safe}`, out = path.join(UPLOADS, file), tmp = out + '.part';
+        fs.mkdirSync(UPLOADS, { recursive: true });
+        let size = 0, failed = false;
+        const ws = fs.createWriteStream(tmp);
+        req.on('data', c => { size += c.length; if (size > MAX_UPLOAD && !failed) { failed = true; ws.destroy(); fs.rmSync(tmp, { force: true }); send(res, 413, { error: 'That file is over 25 MB.' }); req.resume(); } });
+        req.pipe(ws);
+        ws.on('finish', () => { if (failed) return; fs.renameSync(tmp, out); send(res, 200, { file, name: safe, size, type: UPLOAD_TYPES[path.extname(file).toLowerCase()] || '' }); });
+        ws.on('error', e => { if (!failed) { failed = true; fs.rmSync(tmp, { force: true }); send(res, 500, { error: String(e) }); } });
+        return true;
+      }
+      if (r === '/send') { body(req, res, b => send(res, 200, persona.send(b.text, b.context, b.attachments))); return true; }
       if (r === '/stop') { send(res, 200, { stopped: persona.stop() }); return true; }
       if (r === '/reset') { persona.reset(); send(res, 200, { ok: true }); return true; }
       if (r === '/agent') { body(req, res, b => send(res, 200, persona.setAgent(String(b.agent || '')))); return true; }

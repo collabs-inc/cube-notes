@@ -327,3 +327,26 @@ input[type=range] { accent-color: var(--accent); }
 .pf-drawer-body .persona-grip { display: none; }
 @keyframes pf-pop { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
 @keyframes pf-slide { from { transform: translateX(20px); opacity: 0; } }
+
+/* attachments: chips in the composer, thumbnails on the user's message, the drop target */
+.persona { position: relative; }
+.persona-files { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 2px 6px; }
+.persona-files:empty { display: none; }
+.persona-files .file { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; font-size: 11.5px; color: var(--label-2); background: var(--fill-2); border-radius: 8px; padding: 3px 3px 3px 3px; }
+.persona-files .file img { width: 28px; height: 28px; object-fit: cover; border-radius: 5px; }
+.persona-files .file svg { width: 14px; height: 14px; margin-left: 4px; }
+.persona-files .file > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
+.persona-files .file.up { opacity: .55; }
+.persona-files .file.err { color: var(--red, #e5484d); }
+.persona-files .file button { width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; color: var(--label-3); }
+.persona-files .file button:hover { background: var(--fill); color: var(--label); }
+.persona-attach { flex: none; width: 26px; height: 26px; margin: 0 2px 1px -8px; border-radius: 50%; display: grid; place-items: center; color: var(--label-3); }
+.persona-attach:hover { color: var(--label); background: var(--fill-2); }
+.persona-attach svg { width: 16px; height: 16px; }
+.msg-files { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin: 0 0 4px auto; max-width: 85%; }
+.msg-file { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--label-2); background: var(--fill-2); border-radius: 10px; padding: 6px 10px; text-decoration: none; }
+.msg-file svg { width: 14px; height: 14px; }
+.msg-file.img { padding: 0; background: none; }
+.msg-file.img img { display: block; max-width: 220px; max-height: 160px; border-radius: 12px; box-shadow: var(--shadow-sm); }
+.persona-drop { position: absolute; inset: 8px; display: none; place-items: center; border: 2px dashed var(--accent); border-radius: 14px; background: var(--accent-soft); color: var(--accent); font-weight: 600; pointer-events: none; z-index: 5; }
+.persona.dropping .persona-drop { display: grid; }
